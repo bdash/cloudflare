@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
+	"os"
 
 	"github.com/libdns/libdns"
 )
@@ -116,11 +118,23 @@ func (p *Provider) getZoneInfo(ctx context.Context, zoneName string) (cfZone, er
 // it for convenience.
 func (p *Provider) doAPIRequest(req *http.Request, result interface{}) (cfResponse, error) {
 	req.Header.Set("Authorization", "Bearer "+p.APIToken)
+	bytes, err := httputil.DumpRequest(req, true)
+	if err != nil {
+		return cfResponse{}, err
+	}
+	os.Stderr.Write(bytes)
+	os.Stderr.WriteString("\n")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return cfResponse{}, err
 	}
+	rbytes, err := httputil.DumpResponse(resp, true)
+	if err != nil {
+		return cfResponse{}, err
+	}
+	os.Stderr.Write(rbytes)
+	os.Stderr.WriteString("\n")
 	defer resp.Body.Close()
 
 	var respData cfResponse
